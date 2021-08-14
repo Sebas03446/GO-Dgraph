@@ -1,0 +1,19 @@
+#Obtener todos los compradores
+{
+  Buyer(func: has(name)) {
+   name
+   id
+   time 
+  age
+   expand(_all_)
+  }
+}
+#obtener un comprador 
+{
+	data(func: eq(name, "Beaner")) {
+		  name
+		  id
+		  time
+		  age
+    }
+}
