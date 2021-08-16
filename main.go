@@ -20,6 +20,5 @@ func GetPeople(w http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(w).Encode(people)
 }*/
 func main() {
-
 	handlers.Controller()
 }

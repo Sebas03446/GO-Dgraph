@@ -10,10 +10,134 @@
 }
 #obtener un comprador 
 {
-	data(func: eq(name, "Beaner")) {
+	data(func: eq(name, "Leigh")) {
 		  name
 		  id
 		  time
 		  age
     }
+}
+#data
+
+type Buyer {
+					id
+					name
+					age
+					products
+					time
+				}
+        type Product{
+					id
+					name
+					price
+					time
+					buy
+				}
+        type Transaction{
+        		id
+            buyer_id
+            ip
+            device
+            products
+        }
+				id: string @index(term).
+        buyer_id: string @index(term).
+        ip: string @index(term).
+        device: string @index(term).
+				name: string @index(term).
+				age: int @index(int).
+				products:[uid].
+				time: int @index(int).
+				price: float @index(float). 
+				buy: [uid].
+#
+{
+  data(func: has(name)) {
+   uid
+   name
+   id
+   time 
+  age
+    products:{
+			name
+  }
+}
+}
+#
+
+{
+  "set": [
+   {
+     "uid":"0x5458",
+    "products":[
+				{
+    			"name":"Cafe"
+
+  			}
+			]
+		}
+  ]
+}
+
+#
+
+{
+		data(func: eq(name, "Kerr")) {
+		  name
+		  id
+		  time
+		  age
+      products{
+					name
+      }
+    
+		}
+}
+#####
+`type Buyer {
+					id
+					name
+					age
+					products
+					time
+				}
+				type Product{
+					id
+					name
+					price
+					time
+					buy
+				}
+				id: string @index(term).
+				name: string @index(term).
+				age: int @index(int).
+				products:[uid].
+				time: int @index(int).
+				price: float @index(float). 
+				buy: [uid].`
+####
+
+{
+		data(func: uid("0x5a0ae")) {
+		  name
+		  id
+		  time
+		  age
+      products{
+					name
+      }
+    
+		}
+}
+{
+		data(func: uid("0x517a3")) {
+		  name
+		  id
+		  time
+		  age
+      products{
+					p_id
+      }
+    
+		}
 }
