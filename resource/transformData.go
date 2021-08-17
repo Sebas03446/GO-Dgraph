@@ -42,21 +42,6 @@ type Root struct {
 	Data []UidTotal `dgraph:"data{data}"`
 }
 
-func OneTransactio() TransactionPredicate {
-	var newT TransactionPredicate
-	newT.BuyerId = "0x439b1"
-	var t TransactionProduct
-	t.Uid = "0x43c84"
-	var p TransactionProduct
-	p.Uid = "0x43cb9"
-	newT.Id = "#000061185900"
-	newT.Ip = "118.42.53.99"
-	newT.Device = "android"
-	newT.TimeNow = time.Now().Unix()
-	newT.ProductIds = append(newT.ProductIds, t)
-	newT.ProductIds = append(newT.ProductIds, p)
-	return newT
-}
 func AllTransactio(transaction []Transaction, dg *dgo.Dgraph) []TransactionPredicate {
 	ctx := context.Background()
 	var allT []TransactionPredicate

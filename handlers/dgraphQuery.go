@@ -139,40 +139,9 @@ func SetDataToGraph(dg *dgo.Dgraph) {
 		mapUid[r.Data[i].Id] = r.Data[i].Uid
 	}
 	fmt.Println(mapUid["a9fecc93"])
-	/*err = json.Unmarshal(resp2.Json, &r)
-	if err != nil {
-		log.Fatal(err)
-	}*/
-	/*var mapUser = make(map[string]string)
-	for i := 0; i < len(r.Data); i++ {
-		mapUser[r.Data[i].Id] = r.Data[i].Uid
-	}
-	var dataTrans = resource.TransformTransaction()
-	var dataPredicate = resource.GetTransaction(dataTrans, mapUid, mapUser)
-	dTr, err := json.Marshal(dataPredicate)
-	if err != nil {
-		log.Fatal(err)
-	}
-	mu.SetJson = dTr
-	dg.NewTxn().Mutate(ctx, mu)*/
 	/*out, _ := json.MarshalIndent(r, "", "\t")
 	fmt.Printf("%s\n", out)
 	fmt.Println(len(mapUid))*/
-
-}
-func CreateRelation(dg *dgo.Dgraph) {
-	ctx := context.Background()
-	var dataBuy = resource.OneTransactio()
-	dBu, err := json.Marshal(dataBuy)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(string(dBu))
-	mu := &api.Mutation{
-		CommitNow: true,
-	}
-	mu.SetJson = dBu
-	dg.NewTxn().Mutate(ctx, mu)
 
 }
 func CreateRelations(dg *dgo.Dgraph) {
