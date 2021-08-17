@@ -82,7 +82,7 @@ type Buyer {
 #
 
 {
-		data(func: eq(name, "Kerr")) {
+		data(func: eq(id, "18338707")) {
 		  name
 		  id
 		  time
@@ -140,4 +140,42 @@ type Buyer {
       }
     
 		}
+}
+
+##
+{
+  find_michael(func: eq(name, "Michael")) {
+    uid
+    name
+    age
+  }
+}
+###
+schema(pred: [name, age, friend, owns_pet]) {
+  type
+  index
+}
+
+#####
+{
+  michaels_friends_filter(func: allofterms(name@., "Michael")) {
+    name
+    age
+    friend @filter(ge(age, 27)) {
+      name@.
+      age
+    }
+  }
+}
+
+    eq(edge_name, value): equal to
+    ge(edge_name, value): greater than or equal to
+    le(edge_name, value): less than or equal to
+    gt(edge_name, value): greater than
+    lt(edge_name, value): less than
+{
+		data(func: eq(id, "36bc4209")) {
+		  uid
+		  id
+    }
 }

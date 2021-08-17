@@ -29,8 +29,8 @@ func getDgraphClient() (*dgo.Dgraph, context.CancelFunc) {
 func SetDataToGraph(dg *dgo.Dgraph) {
 	var dataBuy = resource.GetBuyer()
 	var dataProduct = resource.GetProduct()
-	/*var dataTrans = resource.TransformTransaction()
-	var dataPredicate = resource.GetTransaction(dataTrans)*/
+	var dataTrans = resource.TransformTransaction()
+	/*var dataPredicate = resource.GetTransaction(dataTrans)*/
 	op := &api.Operation{}
 	op.Schema = `type Buyer {
 						id
@@ -82,42 +82,28 @@ func SetDataToGraph(dg *dgo.Dgraph) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	/*dTran, err := json.Marshal(dataTrans)
+	dTran, err := json.Marshal(dataTrans)
 	if err != nil {
 		log.Fatal(err)
 	}
-	dTr, err := json.Marshal(dataPredicate)
-	if err != nil {
-		log.Fatal(err)
-	}*/
 
 	mu.SetJson = dBu
 	dg.NewTxn().Mutate(ctx, mu)
 	mu.SetJson = dPr
 	dg.NewTxn().Mutate(ctx, mu)
-	//mu.SetJson = dTran
-	//dg.NewTxn().Mutate(ctx, mu)
-	/*mu.SetJson = dTran
+	mu.SetJson = dTran
 	dg.NewTxn().Mutate(ctx, mu)
-	mu.SetJson = dTr
-	dg.NewTxn().Mutate(ctx, mu)
-	//fmt.Println(string(response.Json))*/
-	q := `{
-		data(func: has(price)) {
-		 uid
-		 p_id
+	id := "a9fecc93"
+	users := fmt.Sprintf(`{
+		  data(func: eq(id, "%s")) {
+		   uid
+		   id
+		  }
 		}
-	  }
-	  `
-	/*users := `{
-		data(func: has(age)) {
-		 uid
-		 id
-		}
-	  }
-	  `*/
+		`, id)
+
 	//resp, err := dg.NewTxn().QueryWithVars(ctx, q, variables)
-	resp, err := dg.NewTxn().Query(ctx, q)
+	resp, err := dg.NewTxn().Query(ctx, users)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -135,8 +121,8 @@ func SetDataToGraph(dg *dgo.Dgraph) {
 		Products []Producto `dgraph:"products"`
 	}*/
 	type UidTotal struct {
-		P_id string `dgraph:"p_id"`
-		Uid  string `dgraph:"uid"`
+		Id  string `dgraph:"id"`
+		Uid string `dgraph:"uid"`
 	}
 	type Root struct {
 		Data []UidTotal `dgraph:"data{data}"`
@@ -150,8 +136,9 @@ func SetDataToGraph(dg *dgo.Dgraph) {
 	//fmt.Println(r.Data[0].P_id)
 	var mapUid = make(map[string]string)
 	for i := 0; i < len(r.Data); i++ {
-		mapUid[r.Data[i].P_id] = r.Data[i].Uid
+		mapUid[r.Data[i].Id] = r.Data[i].Uid
 	}
+	fmt.Println(mapUid["a9fecc93"])
 	/*err = json.Unmarshal(resp2.Json, &r)
 	if err != nil {
 		log.Fatal(err)
@@ -169,7 +156,8 @@ func SetDataToGraph(dg *dgo.Dgraph) {
 	mu.SetJson = dTr
 	dg.NewTxn().Mutate(ctx, mu)*/
 	/*out, _ := json.MarshalIndent(r, "", "\t")
-	fmt.Printf("%s\n", out)*/
+	fmt.Printf("%s\n", out)
+	fmt.Println(len(mapUid))*/
 
 }
 func CreateRelation(dg *dgo.Dgraph) {
@@ -189,72 +177,12 @@ func CreateRelation(dg *dgo.Dgraph) {
 }
 func CreateRelations(dg *dgo.Dgraph) {
 	ctx := context.Background()
-	q := `{
-		data(func: has(price)) {
-		 uid
-		 p_id
-		}
-	  }
-	  `
-	resp, err := dg.NewTxn().Query(ctx, q)
-	if err != nil {
-		log.Fatal(err)
-	}
-	type UidTotal struct {
-		P_id string `dgraph:"id"`
-		Uid  string `dgraph:"uid"`
-	}
-	type Root struct {
-		Data []UidTotal `dgraph:"data{data}"`
-	}
-
-	var r Root
-	err = json.Unmarshal(resp.Json, &r)
-	if err != nil {
-		log.Fatal(err)
-	}
-	var mapUid = make(map[string]string)
-	for i := 0; i < len(r.Data); i++ {
-		mapUid[r.Data[i].P_id] = r.Data[i].Uid
-	}
-	type UidTotal2 struct {
-		Id  string `dgraph:"id"`
-		Uid string `dgraph:"uid"`
-	}
-	type Root2 struct {
-		Data []UidTotal2 `dgraph:"data{data}"`
-	}
-	users := `{
-		data(func: has(age)) {
-		 uid
-		 id
-		}
-	  }
-	  `
-	resp2, err := dg.NewTxn().Query(ctx, users)
-	if err != nil {
-		log.Fatal(err)
-	}
-	var rUser Root2
-	err = json.Unmarshal(resp2.Json, &rUser)
-	if err != nil {
-		log.Fatal(err)
-	}
-	var mapUid2 = make(map[string]string)
-	for i := 0; i < len(rUser.Data); i++ {
-		mapUid2[rUser.Data[i].Id] = rUser.Data[i].Uid
-	}
 	var dataTrans = resource.TransformTransaction()
-	var dataBuy = resource.AllTransactio(dataTrans, mapUid, mapUid2)
+	var dataBuy = resource.AllTransactio(dataTrans, dg)
 	dBu, err := json.Marshal(dataBuy)
 	if err != nil {
 		log.Fatal(err)
 	}
-	//fmt.Println(string(dBu))
-	fmt.Println(len(mapUid))
-	fmt.Println(len(mapUid2))
-	fmt.Println("usuarios")
-	fmt.Println(len(rUser.Data))
 	mu := &api.Mutation{
 		CommitNow: true,
 	}

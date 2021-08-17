@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -11,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/dgraph-io/dgo/v200"
 )
 
 type TransactionProduct struct {
@@ -23,6 +26,20 @@ type TransactionPredicate struct {
 	TimeNow    int64                `json:"time"`
 	BuyerId    string               `json:"uid"`
 	ProductIds []TransactionProduct `json:"products"`
+}
+type UidTotal2 struct {
+	Id  string `dgraph:"id"`
+	Uid string `dgraph:"uid"`
+}
+type Root2 struct {
+	Data []UidTotal2 `dgraph:"data{data}"`
+}
+type UidTotal struct {
+	P_id string `dgraph:"p_id"`
+	Uid  string `dgraph:"uid"`
+}
+type Root struct {
+	Data []UidTotal `dgraph:"data{data}"`
 }
 
 func OneTransactio() TransactionPredicate {
@@ -40,26 +57,65 @@ func OneTransactio() TransactionPredicate {
 	newT.ProductIds = append(newT.ProductIds, p)
 	return newT
 }
-func AllTransactio(transaction []Transaction, mapUid map[string]string, mapUser map[string]string) []TransactionPredicate {
+func AllTransactio(transaction []Transaction, dg *dgo.Dgraph) []TransactionPredicate {
+	ctx := context.Background()
 	var allT []TransactionPredicate
 	for i := 0; i < len(transaction); i++ {
-		//REIVAR MAP DE USUARIOS NO SE ESTAN ENVIANDO TODOS LOS USUARIOS, REVISAR EL QUERY (USAR EXPAND ALL ())
+		id := transaction[i].BuyerId
+		users := fmt.Sprintf(`{
+		  data(func: eq(id, "%s")) {
+		   uid
+		   id
+		  }
+		}
+		`, id)
+		resp2, err := dg.NewTxn().Query(ctx, users)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var rUser Root2
+		err = json.Unmarshal(resp2.Json, &rUser)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var mapUid2 = make(map[string]string)
+		for k := 0; k < len(rUser.Data); k++ {
+			mapUid2[rUser.Data[k].Id] = rUser.Data[k].Uid
+		}
 		var transactionUn TransactionPredicate
-		uid := mapUser[transaction[i].BuyerId]
-		//fmt.Println(transaction[i].BuyerId)
-		fmt.Println(mapUser[transaction[i].BuyerId])
+		uid := mapUid2[id]
 		transactionUn.Id = transaction[i].Id
 		transactionUn.Ip = transaction[i].Ip
 		transactionUn.Device = transaction[i].Device
 		transactionUn.TimeNow = time.Now().Unix()
 		transactionUn.BuyerId = uid
 		for j := 0; j < len(transaction[i].ProductIds); j++ {
+			idProduct := transaction[i].ProductIds[j]
+			q := fmt.Sprintf(`{
+				data(func: eq(p_id, "%s")) {
+				 uid
+				 p_id
+				}
+			  }
+			  `, idProduct)
+			resp, err := dg.NewTxn().Query(ctx, q)
+			if err != nil {
+				log.Fatal(err)
+			}
+			var r Root
+			err = json.Unmarshal(resp.Json, &r)
+			if err != nil {
+				log.Fatal(err)
+			}
+			var mapUid = make(map[string]string)
+			for p := 0; p < len(r.Data); p++ {
+				mapUid[r.Data[p].P_id] = r.Data[p].Uid
+			}
 			var transactionProd TransactionProduct
-			//fmt.Println(transaction[i].ProductIds[j])
-			transactionProd.Uid = mapUid[transaction[i].ProductIds[j]]
+			transactionProd.Uid = mapUid[idProduct]
 			transactionUn.ProductIds = append(transactionUn.ProductIds, transactionProd)
 		}
-		//fmt.Println(transactionUn.ProductIds)
+		fmt.Println(transactionUn.ProductIds)
 		allT = append(allT, transactionUn)
 	}
 	return allT
@@ -88,8 +144,8 @@ func GetProduct() []Product {
 			Price: p,
 		})
 	}
-	//productJson, _ := json.Marshal(product)
-	//fmt.Println("lista" + string(productJson))
+	fmt.Println("Cantidad Productos")
+	fmt.Println(len(product))
 	return product
 }
 func GetBuyer() []Buyer {
@@ -103,6 +159,8 @@ func GetBuyer() []Buyer {
 	for i := 0; i < len(f); i++ {
 		f[i].TimeNow = time.Now().Unix()
 	}
+	fmt.Println("Cantidad de compradores")
+	fmt.Println(len(f))
 	return f
 }
 func TransformTransaction() []Transaction {
@@ -161,7 +219,6 @@ func TransformTransaction() []Transaction {
 			}
 			transaction = append(transaction, t)
 		} else {
-
 			count++
 		}
 
