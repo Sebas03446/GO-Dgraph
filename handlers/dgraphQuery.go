@@ -86,67 +86,17 @@ func SetDataToGraph(dg *dgo.Dgraph) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	mu.SetJson = dBu
 	dg.NewTxn().Mutate(ctx, mu)
 	mu.SetJson = dPr
 	dg.NewTxn().Mutate(ctx, mu)
 	mu.SetJson = dTran
 	dg.NewTxn().Mutate(ctx, mu)
-	id := "a9fecc93"
-	users := fmt.Sprintf(`{
-		  data(func: eq(id, "%s")) {
-		   uid
-		   id
-		  }
-		}
-		`, id)
-
-	//resp, err := dg.NewTxn().QueryWithVars(ctx, q, variables)
-	resp, err := dg.NewTxn().Query(ctx, users)
-	if err != nil {
-		log.Fatal(err)
-	}
-	/*resp2, err := dg.NewTxn().Query(ctx, users)
-	if err != nil {
-		log.Fatal(err)
-	}*/
-	//fmt.Println(string(resp.Json))
-	/*type Producto struct {
-		Name  string  `dgraph:"name"`
-		Price float64 `dgraph:"price"`
-	}
-	type Comprador struct {
-		Name     string     `dgraph:"name"`
-		Products []Producto `dgraph:"products"`
-	}*/
-	type UidTotal struct {
-		Id  string `dgraph:"id"`
-		Uid string `dgraph:"uid"`
-	}
-	type Root struct {
-		Data []UidTotal `dgraph:"data{data}"`
-	}
-
-	var r Root
-	err = json.Unmarshal(resp.Json, &r)
-	if err != nil {
-		log.Fatal(err)
-	}
-	//fmt.Println(r.Data[0].P_id)
-	var mapUid = make(map[string]string)
-	for i := 0; i < len(r.Data); i++ {
-		mapUid[r.Data[i].Id] = r.Data[i].Uid
-	}
-	fmt.Println(mapUid["a9fecc93"])
-	/*out, _ := json.MarshalIndent(r, "", "\t")
-	fmt.Printf("%s\n", out)
-	fmt.Println(len(mapUid))*/
+	CreateRelations(dg, dataTrans)
 
 }
-func CreateRelations(dg *dgo.Dgraph) {
+func CreateRelations(dg *dgo.Dgraph, dataTrans []resource.Transaction) {
 	ctx := context.Background()
-	var dataTrans = resource.TransformTransaction()
 	var dataBuy = resource.AllTransactio(dataTrans, dg)
 	dBu, err := json.Marshal(dataBuy)
 	if err != nil {
@@ -157,5 +107,32 @@ func CreateRelations(dg *dgo.Dgraph) {
 	}
 	mu.SetJson = dBu
 	dg.NewTxn().Mutate(ctx, mu)
+}
+func GetAllPurchaser(dg *dgo.Dgraph) {
+	type UidTotal2 struct {
+		Id   string `dgraph:"id"`
+		Name string `dgraph:"name"`
+	}
+	type Root2 struct {
+		Data []UidTotal2 `dgraph:"data{data}"`
+	}
+	ctx := context.Background()
+	users := (`{
+		data(func: has(age)) {
+		 id
+		 name
+		}
+	  }
+	  `)
+	resp2, err := dg.NewTxn().Query(ctx, users)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var rUser Root2
+	err = json.Unmarshal(resp2.Json, &rUser)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(rUser.Data)
 
 }

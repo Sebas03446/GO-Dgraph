@@ -45,28 +45,48 @@ type Root struct {
 func AllTransactio(transaction []Transaction, dg *dgo.Dgraph) []TransactionPredicate {
 	ctx := context.Background()
 	var allT []TransactionPredicate
+	users := (`{
+		data(func: has(age)) {
+		 uid
+		 id
+		}
+	  }
+	  `)
+	resp2, err := dg.NewTxn().Query(ctx, users)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var rUser Root2
+	err = json.Unmarshal(resp2.Json, &rUser)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var mapUid2 = make(map[string]string)
+	for k := 0; k < len(rUser.Data); k++ {
+		mapUid2[rUser.Data[k].Id] = rUser.Data[k].Uid
+	}
+	q := (`{
+		data(func: has(price)) {
+		 uid
+		 p_id
+		}
+	  }
+	  `)
+	resp, err := dg.NewTxn().Query(ctx, q)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var r Root
+	err = json.Unmarshal(resp.Json, &r)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var mapUid = make(map[string]string)
+	for p := 0; p < len(r.Data); p++ {
+		mapUid[r.Data[p].P_id] = r.Data[p].Uid
+	}
 	for i := 0; i < len(transaction); i++ {
 		id := transaction[i].BuyerId
-		users := fmt.Sprintf(`{
-		  data(func: eq(id, "%s")) {
-		   uid
-		   id
-		  }
-		}
-		`, id)
-		resp2, err := dg.NewTxn().Query(ctx, users)
-		if err != nil {
-			log.Fatal(err)
-		}
-		var rUser Root2
-		err = json.Unmarshal(resp2.Json, &rUser)
-		if err != nil {
-			log.Fatal(err)
-		}
-		var mapUid2 = make(map[string]string)
-		for k := 0; k < len(rUser.Data); k++ {
-			mapUid2[rUser.Data[k].Id] = rUser.Data[k].Uid
-		}
 		var transactionUn TransactionPredicate
 		uid := mapUid2[id]
 		transactionUn.Id = transaction[i].Id
@@ -76,31 +96,11 @@ func AllTransactio(transaction []Transaction, dg *dgo.Dgraph) []TransactionPredi
 		transactionUn.BuyerId = uid
 		for j := 0; j < len(transaction[i].ProductIds); j++ {
 			idProduct := transaction[i].ProductIds[j]
-			q := fmt.Sprintf(`{
-				data(func: eq(p_id, "%s")) {
-				 uid
-				 p_id
-				}
-			  }
-			  `, idProduct)
-			resp, err := dg.NewTxn().Query(ctx, q)
-			if err != nil {
-				log.Fatal(err)
-			}
-			var r Root
-			err = json.Unmarshal(resp.Json, &r)
-			if err != nil {
-				log.Fatal(err)
-			}
-			var mapUid = make(map[string]string)
-			for p := 0; p < len(r.Data); p++ {
-				mapUid[r.Data[p].P_id] = r.Data[p].Uid
-			}
 			var transactionProd TransactionProduct
 			transactionProd.Uid = mapUid[idProduct]
 			transactionUn.ProductIds = append(transactionUn.ProductIds, transactionProd)
 		}
-		fmt.Println(transactionUn.ProductIds)
+		//fmt.Println(transactionUn.ProductIds)
 		allT = append(allT, transactionUn)
 	}
 	return allT
@@ -208,5 +208,7 @@ func TransformTransaction() []Transaction {
 		}
 
 	}
+	fmt.Println("Cantidad de transacciones")
+	fmt.Println(len(transaction))
 	return transaction
 }

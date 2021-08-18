@@ -14,16 +14,16 @@ func SyncData(w http.ResponseWriter, req *http.Request) {
 	SetDataToGraph(dg)
 	json.NewEncoder(w).Encode("Data download")
 }
-func predicateData(w http.ResponseWriter, req *http.Request) {
+func ShowPurchaser(w http.ResponseWriter, req *http.Request) {
 	dg, cancel := getDgraphClient()
 	defer cancel()
-	CreateRelations(dg)
-	json.NewEncoder(w).Encode("Data update")
+	GetAllPurchaser(dg)
+	json.NewEncoder(w).Encode("List succesful")
 }
 func Controller() {
 	router := mux.NewRouter()
-	router.HandleFunc("/people", SyncData).Methods("GET")
-	router.HandleFunc("/v1", predicateData).Methods("GET")
+	router.HandleFunc("/v1", SyncData).Methods("GET")
+	router.HandleFunc("/v1/purchaser", ShowPurchaser).Methods("GET")
 	log.Fatal(http.ListenAndServe(":3030", router))
 
 }

@@ -179,3 +179,13 @@ schema(pred: [name, age, friend, owns_pet]) {
 		  id
     }
 }
+########
+id := "a9fecc93"
+	users := fmt.Sprintf(`{
+		  data(func: eq(id, "%s")) {
+		   uid
+		   id
+		  }
+		}
+		`, id)
+	resp, err := dg.NewTxn().Query(ctx, users)
