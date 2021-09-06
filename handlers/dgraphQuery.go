@@ -4,13 +4,20 @@ import (
 	"CHALLENGE/resource"
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/dgraph-io/dgo/v200"
 	"github.com/dgraph-io/dgo/v200/protos/api"
 	"google.golang.org/grpc"
 )
+
+type UidAll struct {
+	Id   string `dgraph:"id"`
+	Name string `dgraph:"name"`
+}
+type Purchaser struct {
+	Data []UidAll `dgraph:"data{data}"`
+}
 
 func getDgraphClient() (*dgo.Dgraph, context.CancelFunc) {
 	conn, err := grpc.Dial("localhost:9081", grpc.WithInsecure())
@@ -108,14 +115,7 @@ func CreateRelations(dg *dgo.Dgraph, dataTrans []resource.Transaction) {
 	mu.SetJson = dBu
 	dg.NewTxn().Mutate(ctx, mu)
 }
-func GetAllPurchaser(dg *dgo.Dgraph) {
-	type UidTotal2 struct {
-		Id   string `dgraph:"id"`
-		Name string `dgraph:"name"`
-	}
-	type Root2 struct {
-		Data []UidTotal2 `dgraph:"data{data}"`
-	}
+func GetAllPurchaser(dg *dgo.Dgraph) []UidAll {
 	ctx := context.Background()
 	users := (`{
 		data(func: has(age)) {
@@ -128,11 +128,12 @@ func GetAllPurchaser(dg *dgo.Dgraph) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var rUser Root2
+	var rUser Purchaser
 	err = json.Unmarshal(resp2.Json, &rUser)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(rUser.Data)
+	//fmt.Println(rUser.Data)
+	return rUser.Data
 
 }
